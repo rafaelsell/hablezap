@@ -11,6 +11,7 @@ import {
   Box,
   Text,
   FormControl,
+  useToast,
 } from "@chakra-ui/react";
 import { AiOutlineWhatsApp } from "react-icons/ai";
 import { BsCopy, BsPerson } from "react-icons/bs";
@@ -20,10 +21,15 @@ import { RiAiGenerate, RiLinkM } from "react-icons/ri";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const schema = z.object({
-  phone: z.string().min(10),
+  phone: z
+    .string()
+    .min(10)
+    .refine((data) => /^\d+$/.test(data), {
+      message: "Phone number must be a number without +.",
+    }),
   name: z.string().min(2).max(30),
   subject: z.string().min(2).max(30),
   message: z.string().min(2).max(300),
@@ -32,25 +38,31 @@ const schema = z.object({
 type TInputs = z.infer<typeof schema>;
 
 export const HomePage = () => {
+  const toast = useToast();
+  const [link, setLink] = useState<string>("");
   const [previewText, setPreviewText] = useState("...");
   const [defaultMessage, setDefaultMessage] = useState(
     "Hey, I'm {name}. I want to talk with you about {subject}. Here is my thoughts:{message}"
   );
-  const handleDefaultMessage = ({
-    name,
-    subject,
-    message,
-  }: {
-    name: string;
-    subject: string;
-    message: string;
-  }) => {
-    const newMessage = defaultMessage
-      .replace("{name}", name)
-      .replace("{subject}", subject)
-      .replace("{message}", message);
-    return newMessage;
-  };
+
+  const handleDefaultMessage = useCallback(
+    ({
+      name,
+      subject,
+      message,
+    }: {
+      name: string;
+      subject: string;
+      message: string;
+    }) => {
+      const newMessage = defaultMessage
+        .replace("{name}", name)
+        .replace("{subject}", subject)
+        .replace("{message}", message);
+      return newMessage;
+    },
+    [defaultMessage]
+  );
 
   const {
     register,
@@ -59,9 +71,14 @@ export const HomePage = () => {
   } = useForm<TInputs>({
     resolver: zodResolver(schema),
   });
+  const nameStatus = watch("name");
+  const subjectStatus = watch("subject");
+  const messageStatus = watch("message");
 
   const handleSubmit = (data: TInputs) => {
-    console.log(data);
+    const { message, name, phone, subject } = data;
+    const text = handleDefaultMessage({ message, name, subject });
+    setLink(`https://wa.me/${phone}?text=${encodeURI(text)}`);
   };
 
   useEffect(() => {
@@ -71,17 +88,32 @@ export const HomePage = () => {
     setPreviewText(
       handleDefaultMessage({ name: name, subject: subject, message: message })
     );
-  }, [defaultMessage, watch, previewText, handleDefaultMessage]);
+  }, [
+    defaultMessage,
+    watch,
+    previewText,
+    handleDefaultMessage,
+    nameStatus,
+    subjectStatus,
+    messageStatus,
+  ]);
 
   return (
     <Stack
       minH={"80vh"}
       gap={8}
-      direction={"row"}
+      w={"100%"}
+      maxW={["300px", "300px", "650px", "650px"]}
+      direction={["column", "column", "row", "row"]}
       justify={"center"}
       align={"center"}
     >
-      <Stack gap={2} as={"form"} onSubmit={handleFormSubmit(handleSubmit)}>
+      <Stack
+        w={"100%"}
+        gap={2}
+        as={"form"}
+        onSubmit={handleFormSubmit(handleSubmit)}
+      >
         <FormControl>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
@@ -208,6 +240,24 @@ export const HomePage = () => {
           </InputLeftElement>
           <InputRightElement>
             <IconButton
+              onClick={() => {
+                navigator.clipboard.writeText(link);
+                if (link === "") {
+                  toast({
+                    title: "There's no link",
+                    status: "info",
+                    duration: 3000,
+                    isClosable: true,
+                  });
+                  return;
+                }
+                toast({
+                  title: "Link copied!",
+                  status: "success",
+                  duration: 3000,
+                  isClosable: true,
+                });
+              }}
               size={"sm"}
               borderRadius={6}
               color={"brand.white.100"}
@@ -228,8 +278,10 @@ export const HomePage = () => {
             />
           </InputRightElement>
           <Input
+            value={link}
             readOnly
-            color={"brand.white.100"}
+            textOverflow={"ellipsis"}
+            color={"brand.white.35"}
             bgColor={"brand.black.200"}
             borderColor={"brand.white.5"}
             focusBorderColor={"brand.green.100"}
@@ -248,9 +300,10 @@ export const HomePage = () => {
         </InputGroup>
       </Stack>
 
-      <Stack maxW={"300px"}>
+      <Stack w={"100%"} maxW={"300px"}>
         <InputGroup>
           <Textarea
+            w={"100%"}
             minH={"150px"}
             color={"brand.white.100"}
             bgColor={"brand.black.200"}
@@ -273,6 +326,7 @@ export const HomePage = () => {
           />
         </InputGroup>
         <Box
+          w={"100%"}
           borderLeftRadius={8}
           borderBottomRightRadius={8}
           p={4}
