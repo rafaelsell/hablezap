@@ -1,4 +1,4 @@
-import { Stack, Image } from "@chakra-ui/react";
+import { Stack } from "@chakra-ui/react";
 import { ReactNode } from "react";
 import { Footer, Navbar } from "./components";
 
