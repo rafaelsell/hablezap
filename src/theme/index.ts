@@ -13,10 +13,16 @@ export const globalTheme = extendTheme({
     colors: {
         brand: {
             black: {
-                100: "#090909",
+                100: "#0A0A0A",
+                200: "#171717"
             },
             white: {
                 100: "#f9f9f9",
+                35: "rgba(249, 249, 249, 0.35)",
+                5: "rgba(249, 249, 249, 0.05)"
+            },
+            green: {
+                100: "#3EAC91"
             }
         }
     },

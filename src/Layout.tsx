@@ -1,5 +1,6 @@
-import { Stack } from "@chakra-ui/react";
+import { Stack, Image } from "@chakra-ui/react";
 import { ReactNode } from "react";
+import { Footer, Navbar } from "./components";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,10 +13,23 @@ export const Layout = ({ children }: LayoutProps) => {
       minH={"100vh"}
       w={"100%"}
       bgColor={"brand.black.100"}
+      align={"center"}
     >
-      <Stack justify={"center"} align={"center"} minH={"100vh"} w={"100%"}>
+      <Stack align={"center"} minH={"100vh"} maxW={"1200px"} w={"100%"}>
+        <Navbar />
         {children}
+        <Footer />
       </Stack>
+      <Image
+        pointerEvents={"none"}
+        zIndex={0}
+        overflow={"hidden"}
+        objectFit={"cover"}
+        src="/bgeffect.svg"
+        alt="bgeffect"
+        position={"absolute"}
+        top={70}
+      />
     </Stack>
   );
 };
